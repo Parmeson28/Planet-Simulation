@@ -1,0 +1,40 @@
+# MTL file - created by a modified js OBJExporter
+
+newmtl Bodymat
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.5527864098548889
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Bodymat.png
+norm normalMap1.png
+
+newmtl Bottommat
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.5527864098548889
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Bottommat.png
+norm normalMap2.png
+
+newmtl Eyewearmat
+Tr 0.0000
+Tf 1.0000 1.0000 1.0000
+illum 1
+Pr 0.5527864098548889
+Pds 1
+Pl 1
+Ka 1 1 1
+Kd 1 1 1
+Ke 0 0 0
+map_Kd Eyewearmat.png
+norm normalMap3.png
