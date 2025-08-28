@@ -1,27 +1,21 @@
 package com.javaProjects.game;
 
-import java.util.Vector;
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
-import com.badlogic.gdx.graphics.VertexAttributes;
+import com.badlogic.gdx.graphics.VertexAttributes.Usage;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
-import com.badlogic.gdx.math.Vector3;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 
@@ -32,7 +26,8 @@ public class Main extends ApplicationAdapter implements InputProcessor{
     private Model sphere;
     private ModelInstance modelInstance;
     private Environment environment;
-    
+
+    private DirectionalLight directionalLight;    
 
     private boolean isLeftPressed;
     private boolean isRightPressed;
@@ -58,11 +53,16 @@ public class Main extends ApplicationAdapter implements InputProcessor{
 
         sphere = modelBuilder.createSphere(2f, 2f, 2f, 60, 60, 
                                             new Material(ColorAttribute.createDiffuse(Color.BLUE)), 
-                                            VertexAttributes.Usage.Position|VertexAttributes.Usage.Normal);
+                                            Usage.Position|Usage.Normal);
         
-        modelInstance = new ModelInstance(sphere, 0f, 0f, 0f);
+        modelInstance = new ModelInstance(sphere, 0f, 5f, 0f);
+
+        directionalLight = new DirectionalLight();
+        directionalLight.set(1f, 1f, 1f, 0f, 5f, 0f);
+
         environment = new Environment();
-        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.8f, 0.8f, 0.8f, 1f));
+        environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
+        environment.add(directionalLight);
         
         Gdx.input.setInputProcessor(this);
     }
@@ -75,7 +75,7 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         camera.update();
 
         modelBatch.begin(camera);
-        modelBatch.render(modelInstance);
+        modelBatch.render(modelInstance, environment);
         modelBatch.end();
 
         isLeftPressed = Gdx.input.isKeyPressed(Keys.A);
