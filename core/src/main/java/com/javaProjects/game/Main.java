@@ -16,6 +16,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Vector3;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 
@@ -28,13 +29,6 @@ public class Main extends ApplicationAdapter implements InputProcessor{
     private Environment environment;
 
     private DirectionalLight directionalLight;    
-
-    private boolean isLeftPressed;
-    private boolean isRightPressed;
-    private boolean isFrontPressed;
-    private boolean isBackPressed;
-    private boolean isUpPressed;
-    private boolean isDownPressed;
 
     private float cameraVelocity = 0.05f;
 
@@ -51,7 +45,7 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         modelBatch = new ModelBatch();
         modelBuilder = new ModelBuilder();
 
-        sphere = modelBuilder.createSphere(2f, 2f, 2f, 60, 60, 
+        sphere = modelBuilder.createSphere(2f, 2f, 2f, 4, 4, 
                                             new Material(ColorAttribute.createDiffuse(Color.BLUE)), 
                                             Usage.Position|Usage.Normal);
         
@@ -78,30 +72,29 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         modelBatch.render(modelInstance, environment);
         modelBatch.end();
 
-        isLeftPressed = Gdx.input.isKeyPressed(Keys.A);
-        isRightPressed = Gdx.input.isKeyPressed(Keys.D);
-        isFrontPressed = Gdx.input.isKeyPressed(Keys.W);
-        isBackPressed = Gdx.input.isKeyPressed(Keys.S);
-        isUpPressed = Gdx.input.isKeyPressed(Keys.SHIFT_LEFT);
-        isDownPressed = Gdx.input.isKeyPressed(Keys.SPACE);
-
-        if(isLeftPressed){
+        if(Gdx.input.isKeyPressed(Keys.A)){
             camera.translate(-cameraVelocity, 0f, 0f);
         }
-        if(isRightPressed){
+        if(Gdx.input.isKeyPressed(Keys.D)){
             camera.translate(cameraVelocity, 0f, 0f);
         }
-        if(isFrontPressed){
+        if(Gdx.input.isKeyPressed(Keys.W)){
             camera.translate(0f, 0f, -cameraVelocity);
         }
-        if(isBackPressed){
+        if(Gdx.input.isKeyPressed(Keys.S)){
             camera.translate(0f, 0f, cameraVelocity);
         }
-        if(isDownPressed){
+        if(Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)){
+            camera.translate(0f, -cameraVelocity, 0f);
+        }
+        if(Gdx.input.isKeyPressed(Keys.SPACE)){
             camera.translate(0f, cameraVelocity, 0f);
         }
-        if(isUpPressed){
-            camera.translate(0f, -cameraVelocity, 0f);
+
+        if(Gdx.input.isKeyPressed(Keys.Q)){
+            modelInstance.transform.rotate(new Vector3(0f, 1f, 0f), 1f);
+        }else if(Gdx.input.isKeyPressed(Keys.E)){
+            modelInstance.transform.rotate(new Vector3(0f, 1f, 0f), -1f);
         }
 
     }
