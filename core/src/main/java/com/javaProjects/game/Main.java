@@ -1,5 +1,7 @@
 package com.javaProjects.game;
 
+import java.util.Vector;
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
@@ -17,23 +19,30 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 
 public class Main extends ApplicationAdapter implements InputProcessor{
-    private PerspectiveCamera camera;
+    //Model Variables
     private ModelBatch modelBatch;
     private ModelBuilder modelBuilder;
-    private Model sphere;
-    private ModelInstance modelInstance;
+    private Model model;
+    private Array<ModelInstance> instances;
+    private ModelInstance ball, ground;
+    
+    //Environment Variables
     private Environment environment;
-
     private DirectionalLight directionalLight;    
 
+    //Camera Variables
+    private PerspectiveCamera camera;
     private float cameraVelocity = 0.05f;
+    private Vector3 cameraRotation = new Vector3(0f, 1f, 0f);
 
     @Override
     public void create() {
+        //Setting the camera
         camera = new PerspectiveCamera(75, 
                                         Gdx.graphics.getWidth(),
                                         Gdx.graphics.getHeight());
@@ -43,17 +52,35 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         camera.far = 300f;
 
         modelBatch = new ModelBatch();
+
+        //Creating the models
         modelBuilder = new ModelBuilder();
+        modelBuilder.begin();
+        modelBuilder.node().id = "ground";
+        modelBuilder.part("box", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
+                          new Material(ColorAttribute.createDiffuse(Color.RED))).box(5f, 1f, 5f);
 
-        sphere = modelBuilder.createSphere(2f, 2f, 2f, 4, 4, 
-                                            new Material(ColorAttribute.createDiffuse(Color.BLUE)), 
-                                            Usage.Position|Usage.Normal);
+        modelBuilder.node().id = "ball";
+        modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
+                          new Material(ColorAttribute.createDiffuse(Color.GREEN))).sphere(1f, 1f, 1f, 10, 10);
+
+        model = modelBuilder.end();
+
+        //Instancing the models
+        ground = new ModelInstance(model, "ground");
+        ball = new ModelInstance(model, "ball");
+        ball.transform.setToTranslation(0f, 9f, 0f);
+
+
+        instances = new Array<ModelInstance>();
+        instances.add(ground);
+        instances.add(ball);
         
-        modelInstance = new ModelInstance(sphere, 0f, 5f, 0f);
-
+        //Setting the directional light
         directionalLight = new DirectionalLight();
         directionalLight.set(1f, 1f, 1f, 0f, 5f, 0f);
 
+        //Setting environment and light
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         environment.add(directionalLight);
@@ -69,9 +96,11 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         camera.update();
 
         modelBatch.begin(camera);
-        modelBatch.render(modelInstance, environment);
+        modelBatch.render(instances, environment);
         modelBatch.end();
 
+
+        //Camera Movement
         if(Gdx.input.isKeyPressed(Keys.A)){
             camera.translate(-cameraVelocity, 0f, 0f);
         }
@@ -90,12 +119,17 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         if(Gdx.input.isKeyPressed(Keys.SPACE)){
             camera.translate(0f, cameraVelocity, 0f);
         }
-
-        if(Gdx.input.isKeyPressed(Keys.Q)){
-            modelInstance.transform.rotate(new Vector3(0f, 1f, 0f), 1f);
-        }else if(Gdx.input.isKeyPressed(Keys.E)){
-            modelInstance.transform.rotate(new Vector3(0f, 1f, 0f), -1f);
+        //Camera Rotation
+        if(Gdx.input.isKeyPressed(Keys.E)){
+            camera.rotate(cameraRotation, 1f);
+        }else if(Gdx.input.isKeyPressed(Keys.Q)){
+            camera.rotate(cameraRotation, -1f);
         }
+
+
+
+        //Handling Planets Movement
+        
 
     }
 
@@ -108,7 +142,7 @@ public class Main extends ApplicationAdapter implements InputProcessor{
 
     @Override
     public void dispose() {
-        sphere.dispose();
+        model.dispose();
         modelBatch.dispose();
     }
 
