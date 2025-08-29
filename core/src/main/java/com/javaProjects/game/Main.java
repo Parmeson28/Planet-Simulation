@@ -30,6 +30,9 @@ public class Main extends ApplicationAdapter implements InputProcessor{
     private Model model;
     private Array<ModelInstance> instances;
     private ModelInstance ball, ground;
+
+    //Model Control Variables
+    private boolean collision;
     
     //Environment Variables
     private Environment environment;
@@ -129,10 +132,18 @@ public class Main extends ApplicationAdapter implements InputProcessor{
 
 
         //Handling Planets Movement
-        
+        final float delta = Math.min(1f/30f, Gdx.graphics.getDeltaTime());
 
+        if(!collision){
+            ball.transform.translate(0f, -delta, 0f);
+            collision = checkCollision();
+        }
     }
 
+
+    boolean checkCollision(){
+        return false;
+    }
 
     @Override
     public boolean keyDown(int keycode) {
