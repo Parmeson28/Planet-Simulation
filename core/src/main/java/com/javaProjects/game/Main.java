@@ -19,6 +19,14 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionConfiguration;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionDispatcher;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
+import com.badlogic.gdx.physics.bullet.collision.btDispatcher;
+import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.utils.Array;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -43,8 +51,22 @@ public class Main extends ApplicationAdapter implements InputProcessor{
     private float cameraVelocity = 0.05f;
     private Vector3 cameraRotation = new Vector3(0f, 1f, 0f);
 
+    //Bullet Object/Shape Variables
+    btCollisionShape groundShape, ballShape;
+    btCollisionObject groundObject, ballObject;
+
+    //Bullet Collision Variables
+    btCollisionConfiguration collisionConfig;
+    btDispatcher dispatcher;
+
     @Override
     public void create() {
+        //Initializing Bullet
+        Bullet.init();
+
+        collisionConfig = new btCollisionConfiguration(0, collision);
+        dispatcher = new btCollisionDispatcher(collisionConfig);
+
         //Setting the camera
         camera = new PerspectiveCamera(75, 
                                         Gdx.graphics.getWidth(),
@@ -78,7 +100,20 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         instances = new Array<ModelInstance>();
         instances.add(ground);
         instances.add(ball);
+
+        //Bullet Collision Shape
+        ballShape = new btSphereShape(0.5f);
+        groundShape = new btBoxShape(new Vector3(2.5f, 0.5f, 2.5f));
         
+        //Bullet Collision Object
+        ballObject = new btCollisionObject();
+        ballObject.setCollisionShape(ballShape);
+        ballObject.setWorldTransform(ball.transform);
+
+        groundObject = new btCollisionObject();
+        groundObject.setCollisionShape(groundShape);
+        groundObject.setWorldTransform(ground.transform);
+
         //Setting the directional light
         directionalLight = new DirectionalLight();
         directionalLight.set(1f, 1f, 1f, 0f, 5f, 0f);
@@ -134,8 +169,11 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         //Handling Planets Movement
         final float delta = Math.min(1f/30f, Gdx.graphics.getDeltaTime());
 
+        //Check the collision between ball and ground
         if(!collision){
             ball.transform.translate(0f, -delta, 0f);
+            ballObject.setWorldTransform(ball.transform);
+
             collision = checkCollision();
         }
     }
