@@ -20,12 +20,19 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
+import com.badlogic.gdx.physics.bullet.collision.CollisionObjectWrapper;
 import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionAlgorithm;
+import com.badlogic.gdx.physics.bullet.collision.btCollisionAlgorithmConstructionInfo;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionConfiguration;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionDispatcher;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionObject;
 import com.badlogic.gdx.physics.bullet.collision.btCollisionShape;
+import com.badlogic.gdx.physics.bullet.collision.btDefaultCollisionConfiguration;
 import com.badlogic.gdx.physics.bullet.collision.btDispatcher;
+import com.badlogic.gdx.physics.bullet.collision.btDispatcherInfo;
+import com.badlogic.gdx.physics.bullet.collision.btManifoldResult;
+import com.badlogic.gdx.physics.bullet.collision.btSphereBoxCollisionAlgorithm;
 import com.badlogic.gdx.physics.bullet.collision.btSphereShape;
 import com.badlogic.gdx.utils.Array;
 
@@ -64,7 +71,7 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         //Initializing Bullet
         Bullet.init();
 
-        collisionConfig = new btCollisionConfiguration(0, collision);
+        collisionConfig = new btDefaultCollisionConfiguration();
         dispatcher = new btCollisionDispatcher(collisionConfig);
 
         //Setting the camera
@@ -180,24 +187,50 @@ public class Main extends ApplicationAdapter implements InputProcessor{
 
 
     boolean checkCollision(){
-        return false;
+        CollisionObjectWrapper co0 = new CollisionObjectWrapper(ballObject);
+		CollisionObjectWrapper co1 = new CollisionObjectWrapper(groundObject);
+		
+		btCollisionAlgorithmConstructionInfo ci = new btCollisionAlgorithmConstructionInfo();
+		ci.setDispatcher1(dispatcher);
+		btCollisionAlgorithm algorithm = new btSphereBoxCollisionAlgorithm(null, ci, co0.wrapper, co1.wrapper, false); 
+
+		btDispatcherInfo info = new btDispatcherInfo();
+		btManifoldResult result = new btManifoldResult(co0.wrapper, co1.wrapper);
+		
+		algorithm.processCollision(co0.wrapper, co1.wrapper, info, result);
+		
+		boolean r = result.getPersistentManifold().getNumContacts() > 0;
+		
+		result.dispose();
+		info.dispose();
+		algorithm.dispose();
+		ci.dispose();
+		co1.dispose();
+		co0.dispose();
+
+		return r;
     }
 
+    @Override
+    public void dispose() {
+        groundObject.dispose();
+		groundShape.dispose();
+		
+		ballObject.dispose();
+		ballShape.dispose();
+		
+		dispatcher.dispose();
+		collisionConfig.dispose();
+		
+		modelBatch.dispose();
+		model.dispose();
+    }
+    
     @Override
     public boolean keyDown(int keycode) {
         return false;
     }
-
-
-    @Override
-    public void dispose() {
-        model.dispose();
-        modelBatch.dispose();
-    }
-
     
-    
-
     @Override
     public boolean keyUp(int keycode) {
         return false;
