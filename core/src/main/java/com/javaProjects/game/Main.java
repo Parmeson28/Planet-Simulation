@@ -2,6 +2,7 @@ package com.javaProjects.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -16,6 +17,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.bullet.Bullet;
 import com.badlogic.gdx.physics.bullet.collision.CollisionObjectWrapper;
@@ -92,10 +94,11 @@ public class Main extends ApplicationAdapter implements InputProcessor{
     //Environment Variables
     private Environment environment;
     private DirectionalLight directionalLight;    
+    
+    float spawnTimer;
 
     //Camera Variables
     private PerspectiveCamera camera;
-    private CameraInputController camController;
     private float cameraVelocity = 0.05f;
     private Vector3 cameraRotation = new Vector3(0f, 1f, 0f);
 
@@ -122,9 +125,6 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         camera.lookAt(0f, 0f, 0f);
         camera.near = 0.1f;
         camera.far = 300f;
-
-        camController = new CameraInputController(camera);
-        Gdx.input.setInputProcessor(camController);
 
         modelBatch = new ModelBatch();
 
@@ -180,6 +180,21 @@ public class Main extends ApplicationAdapter implements InputProcessor{
 
     @Override
     public void render() {
+        final float delta = Math.min(1f/30f, Gdx.graphics.getDeltaTime());
+        
+        for(GameObject obj : instances){
+            obj.transform.trn(0f, -delta, 0f);
+            obj.body.setWorldTransform(obj.transform);
+
+            if(checkCollision(obj.body, instances.get(0).body))
+                obj.moving = false;
+        }
+
+        if((spawnTimer -= delta) < 0){
+            spawn();
+            spawnTimer = 1.5f;
+        }
+        
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
         
@@ -189,8 +204,6 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         modelBatch.render(instances, environment);
         modelBatch.end();
 
-
-        /* 
         //Camera Movement
         if(Gdx.input.isKeyPressed(Keys.A)){
             camera.translate(-cameraVelocity, 0f, 0f);
@@ -217,18 +230,18 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         }else if(Gdx.input.isKeyPressed(Keys.Q)){
             camera.rotate(cameraRotation, -1f);
         }
-        */
-        camController.update();
 
-        //Handling Planets Movement
-        final float delta = Math.min(1f/30f, Gdx.graphics.getDeltaTime());
 
-        //Check the collision between ball and ground
-        if(!collision){
-            collision = checkCollision(ballObject, groundObject);
-        }
     }
 
+    public void spawn(){
+        GameObject obj = constructors.values[1+MathUtils.random(constructors.size-2)].construct();
+        obj.moving = true;
+        obj.transform.setFromEulerAngles(MathUtils.random(360f), MathUtils.random(360f), MathUtils.random(360f));
+        obj.transform.trn(MathUtils.random(-2.5f, 2.5f), 9f, MathUtils.random(-2.5f, 2.5f));
+        obj.body.setWorldTransform(obj.transform);
+        instances.add(obj);
+    }
 
     boolean checkCollision(btCollisionObject obj0, btCollisionObject obj1){
         CollisionObjectWrapper co0 = new CollisionObjectWrapper(obj0);
