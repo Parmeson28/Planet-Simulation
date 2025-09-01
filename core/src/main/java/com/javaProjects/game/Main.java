@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
-import com.badlogic.gdx.graphics.g3d.utils.CameraInputController;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
@@ -178,16 +177,20 @@ public class Main extends ApplicationAdapter implements InputProcessor{
         environment.add(directionalLight);
     }
 
+
+    //MAIN LOOP FOR THE APPLICATION TO RUN
     @Override
     public void render() {
         final float delta = Math.min(1f/30f, Gdx.graphics.getDeltaTime());
         
         for(GameObject obj : instances){
-            obj.transform.trn(0f, -delta, 0f);
-            obj.body.setWorldTransform(obj.transform);
+            if(obj.moving){
+                obj.transform.trn(0f, -delta, 0f);
+                obj.body.setWorldTransform(obj.transform);
 
-            if(checkCollision(obj.body, instances.get(0).body))
-                obj.moving = false;
+                if(checkCollision(obj.body, instances.get(0).body))
+                    obj.moving = false;
+            }
         }
 
         if((spawnTimer -= delta) < 0){
