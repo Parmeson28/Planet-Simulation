@@ -2,6 +2,7 @@ package com.javaProjects.game;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
@@ -33,7 +34,7 @@ public class Main extends ApplicationAdapter{
 
     //Camera Variables
     private PerspectiveCamera camera;
-    private float cameraVel = 0.5f;
+    private float cameraVel = 0.05f;
     private Vector3 cameraRotation = new Vector3(0f, 1f, 0f);
 
     @Override
@@ -48,6 +49,8 @@ public class Main extends ApplicationAdapter{
         camera.near = 0.1f;
         camera.far = 300f;
 
+
+        instances = new Array<>();
         modelBatch = new ModelBatch();
 
         //Building the models
@@ -57,9 +60,13 @@ public class Main extends ApplicationAdapter{
 
         modelBuilder.node().id = "sun";
         modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.YELLOW))).sphere(1f, 1f, 1f, 10, 10);
+                          new Material(ColorAttribute.createDiffuse(Color.YELLOW))).sphere(1f, 1f, 1f, 40, 40);
         
         model = modelBuilder.end();
+
+        ModelInstance suInstance = new ModelInstance(model);
+
+        instances.add(suInstance);
 
         //Setting the directional light
         directionalLight = new DirectionalLight();
@@ -83,9 +90,35 @@ public class Main extends ApplicationAdapter{
         modelBatch.begin(camera);
         modelBatch.render(instances, environment);
         modelBatch.end();
-    }
 
-    
+        //Camera Movement
+        if(Gdx.input.isKeyPressed(Keys.A)){
+            camera.translate(-cameraVel, 0f, 0f);
+        }
+        if(Gdx.input.isKeyPressed(Keys.D)){
+            camera.translate(cameraVel, 0f, 0f);
+        }
+        if(Gdx.input.isKeyPressed(Keys.W)){
+            camera.translate(0f, 0f, -cameraVel);
+        }
+        if(Gdx.input.isKeyPressed(Keys.S)){
+            camera.translate(0f, 0f, cameraVel);
+        }
+        if(Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)){
+            camera.translate(0f, -cameraVel, 0f);
+        }
+        if(Gdx.input.isKeyPressed(Keys.SPACE)){
+            camera.translate(0f, cameraVel, 0f);
+        }
+
+        //Camera Rotation
+        if(Gdx.input.isKeyPressed(Keys.E)){
+            camera.rotate(cameraRotation, 1f);
+        }else if(Gdx.input.isKeyPressed(Keys.Q)){
+            camera.rotate(cameraRotation, -1f);
+        }
+
+    }
     
     @Override
     public void dispose() {
