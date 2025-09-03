@@ -17,6 +17,7 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
 
@@ -30,6 +31,12 @@ public class Main extends ApplicationAdapter{
     private Model model;
     private ModelInstance star, planet;
     private Array<ModelInstance> instances;
+
+    //Orbit system variables
+    private float planetAngle = 0f;
+    private float planetSpeed = 20f;
+    private float planetRadius = 5f;
+    private float starRadius = 10f;
 
     //Environment Variables
     private Environment environment;
@@ -57,7 +64,7 @@ public class Main extends ApplicationAdapter{
                                        Gdx.graphics.getHeight());
 
         //Setting the camera position and where it looks at
-        camera.position.set(0f, 10f, 0f);
+        camera.position.set(0f, 30f, 0f);
         camera.lookAt(0f, 0f, 0f);
         //Setting how far and how near we need 
         //to be to stop rendering the models
@@ -66,7 +73,6 @@ public class Main extends ApplicationAdapter{
 
         /******** ===== (CREATING THE CAMERA) ===== ********/
         /******** === OVERALL VIEW OF THE CODE === ********/
-
 
 
         /******** ============ OVERALL VIEW OF THE CODE ============ ********/
@@ -81,7 +87,7 @@ public class Main extends ApplicationAdapter{
         modelBuilder.begin();
         modelBuilder.node().id = "sun";
         modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.YELLOW))).sphere(1f, 1f, 1f, 40, 40);
+                          new Material(ColorAttribute.createDiffuse(Color.YELLOW))).sphere(starRadius, starRadius, starRadius, 40, 40);
         model = modelBuilder.end();
 
         star = new ModelInstance(model);
@@ -90,20 +96,20 @@ public class Main extends ApplicationAdapter{
         modelBuilder.begin();
         modelBuilder.node().id = "planet";
         modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.GREEN))).sphere(1f, 1f, 1f, 40, 40);
+                          new Material(ColorAttribute.createDiffuse(Color.GREEN))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
         model = modelBuilder.end();
 
         planet = new ModelInstance(model);
-        planet.transform.setToTranslation(5f, 0f, 5f);
+        planet.transform.setToTranslation(5f, 0f, 15f);
         instances.add(planet);
 
         modelBuilder.begin();
         modelBuilder.node().id = "planet";
         modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.BLUE))).sphere(1f, 1f, 1f, 40, 40);
+                          new Material(ColorAttribute.createDiffuse(Color.BLUE))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
         model = modelBuilder.end();
         planet = new ModelInstance(model);
-        planet.transform.setToTranslation(5f, 0f, 2f);
+        planet.transform.setToTranslation(15f, 0f, 2f);
         instances.add(planet);
 
         System.out.println(instances.size);
@@ -139,6 +145,15 @@ public class Main extends ApplicationAdapter{
     //MAIN LOOP FOR THE APPLICATION TO RUN
     @Override
     public void render() {
+        float delta = Gdx.graphics.getDeltaTime();
+
+        planetAngle += planetSpeed * delta;
+
+        if (planetAngle > 360f)
+            planetAngle -= 360f;
+        
+        float x = MathUtils.cosDeg(planetAngle) * (planetRadius + starRadius);
+        float z = MathUtils.sinDeg(planetAngle) * (planetRadius + starRadius);
 
         Gdx.gl.glClearColor(0, 0, 0, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
@@ -153,7 +168,7 @@ public class Main extends ApplicationAdapter{
         //Searching for planet models in the instances
         for(ModelInstance obj : instances){
             if(obj.getNode("planet") != null)
-                obj.transform.translate(0f, 0.01f, 0f);
+                obj.transform.setToTranslation(x, 0f, z);
         }
         
 
@@ -192,7 +207,7 @@ public class Main extends ApplicationAdapter{
     
     @Override
     public void dispose() {
-        
+
         font.dispose();
         batch.dispose();
 
