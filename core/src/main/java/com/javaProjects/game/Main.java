@@ -37,6 +37,8 @@ public class Main extends ApplicationAdapter{
     private float planetSpeed = 20f;
     private float planetRadius = 5f;
     private float starRadius = 10f;
+    private Vector3 initialPosition;
+    private Array<Vector3> initialPositions;
 
     //Environment Variables
     private Environment environment;
@@ -83,6 +85,7 @@ public class Main extends ApplicationAdapter{
 
         modelBuilder = new ModelBuilder();
         instances = new Array<>();
+        initialPositions = new Array<>();
 
         modelBuilder.begin();
         modelBuilder.node().id = "sun";
@@ -91,6 +94,11 @@ public class Main extends ApplicationAdapter{
         model = modelBuilder.end();
 
         star = new ModelInstance(model);
+
+        initialPosition = new Vector3(0f, 0f, 0f);
+        initialPositions.add(initialPosition);
+
+        star.transform.setToTranslation(initialPosition);
         instances.add(star);
 
         modelBuilder.begin();
@@ -100,7 +108,11 @@ public class Main extends ApplicationAdapter{
         model = modelBuilder.end();
 
         planet = new ModelInstance(model);
-        planet.transform.setToTranslation(5f, 0f, 15f);
+
+        initialPosition = new Vector3(5f, 0f, 15f);
+        initialPositions.add(initialPosition);
+
+        planet.transform.setToTranslation(initialPosition);
         instances.add(planet);
 
         modelBuilder.begin();
@@ -108,8 +120,13 @@ public class Main extends ApplicationAdapter{
         modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
                           new Material(ColorAttribute.createDiffuse(Color.BLUE))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
         model = modelBuilder.end();
+        
         planet = new ModelInstance(model);
-        planet.transform.setToTranslation(15f, 0f, 2f);
+
+        initialPosition = new Vector3(15f, 0f, 2f);
+        initialPositions.add(initialPosition);
+
+        planet.transform.setToTranslation(initialPosition);
         instances.add(planet);
 
         System.out.println(instances.size);
@@ -152,9 +169,6 @@ public class Main extends ApplicationAdapter{
         if (planetAngle > 360f)
             planetAngle -= 360f;
         
-        float x = MathUtils.cosDeg(planetAngle) * (planetRadius + starRadius);
-        float z = MathUtils.sinDeg(planetAngle) * (planetRadius + starRadius);
-
         Gdx.gl.glClearColor(0, 0, 0, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
 
@@ -165,10 +179,23 @@ public class Main extends ApplicationAdapter{
 
         camera.update();
 
+        int i = 0;
+
+        
         //Searching for planet models in the instances
         for(ModelInstance obj : instances){
-            if(obj.getNode("planet") != null)
+
+            i++;
+
+            if(obj.getNode("planet") != null){
+                
+
+                float x = MathUtils.cosDeg(planetAngle) * (planetRadius + starRadius + initialPositions.get(i-1).x);
+                float z = MathUtils.sinDeg(planetAngle) * (planetRadius + starRadius + initialPositions.get(i-1).z);
+
                 obj.transform.setToTranslation(x, 0f, z);
+            }
+
         }
         
 
