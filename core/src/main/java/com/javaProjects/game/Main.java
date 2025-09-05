@@ -17,9 +17,9 @@ import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.Array;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -99,6 +99,7 @@ public class Main extends ApplicationAdapter{
     private SpriteBatch batch;
     private BitmapFont font;
     private boolean showFPS = true;
+    private ShapeRenderer shapeRenderer;
 
     @Override
     public void create() {
@@ -168,9 +169,11 @@ public class Main extends ApplicationAdapter{
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         environment.add(directionalLight);
 
-        //FPS counter
+        //FPS counter and UI stuff
+        shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
         font = new BitmapFont();
+        
         
         /******** ===== (SETTING ENVIRONMENT AND LIGHTING) ===== ********/
         /******** ========== OVERALL VIEW OF THE CODE ========== ********/
@@ -186,12 +189,8 @@ public class Main extends ApplicationAdapter{
         
         Gdx.gl.glClearColor(0, 0, 0, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
-
-        //Drawing FPS
-        batch.begin();
-        font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, 20);
-        batch.end();
-
+        
+       
         camera.update();
 
         int i = 0;
@@ -201,14 +200,10 @@ public class Main extends ApplicationAdapter{
         
         //Searching for planet models in the instances
         for(ModelInstance obj : planetInstances){
-
             i++;
-            
             MovePlanets(delta, obj, i);
-
         }
-        
-
+    
         modelBatch.begin(camera);
 
         modelBatch.render(starInstance, environment);
@@ -232,7 +227,7 @@ public class Main extends ApplicationAdapter{
         if(Gdx.input.isKeyPressed(Keys.SHIFT_LEFT)){
             camera.translate(0f, -cameraVel, 0f);
         }
-        if(Gdx.input.isKeyPressed(Keys.SPACE)){
+        if(Gdx.input.isKeyPressed(Keys.CONTROL_LEFT)){
             camera.translate(0f, cameraVel, 0f);
         }
 
@@ -244,15 +239,37 @@ public class Main extends ApplicationAdapter{
         }
 
         //Create new planet
-        if(Gdx.input.justTouched()){
+        if(Gdx.input.isKeyJustPressed(Keys.ENTER)){
+            float randX = MathUtils.random(10, 40);
+            float randZ = MathUtils.random(10, 40);
 
-            Ray ray = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
-
-                
-            System.out.println(ray.direction.x);
-
-
+            CreatePlanets(randX, randZ);
         }
+
+        //Reduce and increase simulation speed
+        if(Gdx.input.isKeyJustPressed(Keys.P)){
+            planetSpeed += 1;
+        }
+        if(Gdx.input.isKeyJustPressed(Keys.O)){
+            planetSpeed -= 1;
+        }
+        if(Gdx.input.isKeyJustPressed(Keys.SPACE)){
+            planetSpeed = 0;
+        }
+
+
+         //FPS counter and UI stuff
+         batch.begin();
+         font.draw(batch, "FPS: " + Gdx.graphics.getFramesPerSecond(), 10, 20);
+         font.draw(batch, "Press W,A,S,D to move around", 10, 470);
+         font.draw(batch, "Press E,Q to rotate camera", 10, 450);
+         font.draw(batch, "Press ENTER to create a planet", 420, 20);
+         font.draw(batch, "Press P to increase velocity", 450, 450);
+         font.draw(batch, "Press O to decrease velocity", 444, 470);
+         font.draw(batch, "Press SPACE to set velocity to 0", 423, 430);
+         batch.end();
+ 
+ 
 
     }
     
