@@ -28,7 +28,6 @@ public class Main extends ApplicationAdapter{
 
     public void CreatePlanets(float posx, float posz){
 
-        
         float planetAngle = MathUtils.random(0f, 360f);
 
         planetAngles.add(planetAngle);
@@ -55,7 +54,7 @@ public class Main extends ApplicationAdapter{
 
         float distanceFromOrigin = (float)Math.sqrt(Math.pow(initialPositions.get(i-1).x, 2) + Math.pow(initialPositions.get(i-1).z, 2));
 
-        angle += (planetSpeed * delta)/(distanceFromOrigin/100);
+        angle += (sunMass * delta)/(distanceFromOrigin/100);
 
         if (angle > 360f)
             angle -= 360f;
@@ -79,8 +78,8 @@ public class Main extends ApplicationAdapter{
 
     //Orbit system variables
     private float angle = 0;
-    private float planetSpeed = 5f;
-    private float planetRadius = 5f;
+    private float sunMass = 5f;
+    private float planetRadius = 1f;
     private float starRadius = 10f;
     private Vector3 initialPosition;
     private Array<Float> planetAngles = new Array<>();
@@ -147,10 +146,6 @@ public class Main extends ApplicationAdapter{
 
         star.transform.setToTranslation(initialPosition);
         starInstance.add(star);
-
-        CreatePlanets(15f, 10f);
-        CreatePlanets(5f, 5f);
-        CreatePlanets(20f, 20f);
         
         /******** ===== (BUILDING THE PLANET AND STAR MODELS) ===== ********/
         /******** ============ OVERALL VIEW OF THE CODE ============ ********/
@@ -248,15 +243,14 @@ public class Main extends ApplicationAdapter{
 
         //Reduce and increase simulation speed
         if(Gdx.input.isKeyJustPressed(Keys.P)){
-            planetSpeed += 1;
+            sunMass += 1;
         }
         if(Gdx.input.isKeyJustPressed(Keys.O)){
-            planetSpeed -= 1;
+            sunMass -= 1;
         }
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)){
-            planetSpeed = 0;
+            sunMass = 0;
         }
-
 
          //FPS counter and UI stuff
          batch.begin();
@@ -268,9 +262,6 @@ public class Main extends ApplicationAdapter{
          font.draw(batch, "Press O to decrease velocity", 444, 470);
          font.draw(batch, "Press SPACE to set velocity to 0", 423, 430);
          batch.end();
- 
- 
-
     }
     
     @Override
