@@ -19,25 +19,71 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.Ray;
 import com.badlogic.gdx.utils.Array;
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
 
 public class Main extends ApplicationAdapter{
 
+    public void CreatePlanets(float posx, float posz){
+
+        
+        float planetAngle = MathUtils.random(0f, 360f);
+
+        planetAngles.add(planetAngle);
+
+        modelBuilder.begin();
+
+        modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
+                          new Material(ColorAttribute.createDiffuse(Color.GREEN))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
+        model = modelBuilder.end();
+
+        planet = new ModelInstance(model);
+
+        initialPosition = new Vector3(posx, 0f, posz);
+        initialPositions.add(initialPosition);
+
+        planet.transform.setToTranslation(initialPosition);
+        planetInstances.add(planet);
+        
+    }
+
+    public void MovePlanets(float delta, ModelInstance obj, int i){
+
+        angle = planetAngles.get(i-1);
+
+        float distanceFromOrigin = (float)Math.sqrt(Math.pow(initialPositions.get(i-1).x, 2) + Math.pow(initialPositions.get(i-1).z, 2));
+
+        angle += (planetSpeed * delta)/(distanceFromOrigin/100);
+
+        if (angle > 360f)
+            angle -= 360f;
+
+        planetAngles.set(i-1, angle);
+
+        float x = MathUtils.cosDeg(angle) * (planetRadius + starRadius + distanceFromOrigin);
+        float z = MathUtils.sinDeg(angle) * (planetRadius + starRadius + distanceFromOrigin);
+
+        obj.transform.setToTranslation(x, 0f, z);
+    }
+
+    
+
     //Model Variables
     private ModelBatch modelBatch;
     private ModelBuilder modelBuilder;
     private Model model;
     private ModelInstance star, planet;
-    private Array<ModelInstance> instances;
+    private Array<ModelInstance> planetInstances, starInstance;
 
     //Orbit system variables
-    private float planetAngle = 0f;
-    private float planetSpeed = 20f;
+    private float angle = 0;
+    private float planetSpeed = 5f;
     private float planetRadius = 5f;
     private float starRadius = 10f;
     private Vector3 initialPosition;
+    private Array<Float> planetAngles = new Array<>();
     private Array<Vector3> initialPositions;
 
     //Environment Variables
@@ -46,7 +92,7 @@ public class Main extends ApplicationAdapter{
 
     //Camera Variables
     private PerspectiveCamera camera;
-    private float cameraVel = 0.05f;
+    private float cameraVel = 0.1f;
     private Vector3 cameraRotation = new Vector3(0f, 1f, 0f);
 
     //FPS counter
@@ -66,7 +112,7 @@ public class Main extends ApplicationAdapter{
                                        Gdx.graphics.getHeight());
 
         //Setting the camera position and where it looks at
-        camera.position.set(0f, 30f, 0f);
+        camera.position.set(0f, 50f, 0f);
         camera.lookAt(0f, 0f, 0f);
         //Setting how far and how near we need 
         //to be to stop rendering the models
@@ -84,7 +130,8 @@ public class Main extends ApplicationAdapter{
         //which later will be used to identify the type of body it is
 
         modelBuilder = new ModelBuilder();
-        instances = new Array<>();
+        planetInstances = new Array<>();
+        starInstance = new Array<>();
         initialPositions = new Array<>();
 
         modelBuilder.begin();
@@ -96,40 +143,13 @@ public class Main extends ApplicationAdapter{
         star = new ModelInstance(model);
 
         initialPosition = new Vector3(0f, 0f, 0f);
-        initialPositions.add(initialPosition);
 
         star.transform.setToTranslation(initialPosition);
-        instances.add(star);
+        starInstance.add(star);
 
-        modelBuilder.begin();
-        modelBuilder.node().id = "planet";
-        modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.GREEN))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
-        model = modelBuilder.end();
-
-        planet = new ModelInstance(model);
-
-        initialPosition = new Vector3(5f, 0f, 15f);
-        initialPositions.add(initialPosition);
-
-        planet.transform.setToTranslation(initialPosition);
-        instances.add(planet);
-
-        modelBuilder.begin();
-        modelBuilder.node().id = "planet";
-        modelBuilder.part("sphere", GL20.GL_TRIANGLES, Usage.Position|Usage.Normal, 
-                          new Material(ColorAttribute.createDiffuse(Color.BLUE))).sphere(planetRadius, planetRadius, planetRadius, 40, 40);
-        model = modelBuilder.end();
-        
-        planet = new ModelInstance(model);
-
-        initialPosition = new Vector3(15f, 0f, 2f);
-        initialPositions.add(initialPosition);
-
-        planet.transform.setToTranslation(initialPosition);
-        instances.add(planet);
-
-        System.out.println(instances.size);
+        CreatePlanets(15f, 10f);
+        CreatePlanets(5f, 5f);
+        CreatePlanets(20f, 20f);
         
         /******** ===== (BUILDING THE PLANET AND STAR MODELS) ===== ********/
         /******** ============ OVERALL VIEW OF THE CODE ============ ********/
@@ -162,12 +182,7 @@ public class Main extends ApplicationAdapter{
     //MAIN LOOP FOR THE APPLICATION TO RUN
     @Override
     public void render() {
-        float delta = Gdx.graphics.getDeltaTime();
-
-        planetAngle += planetSpeed * delta;
-
-        if (planetAngle > 360f)
-            planetAngle -= 360f;
+        
         
         Gdx.gl.glClearColor(0, 0, 0, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT|GL20.GL_DEPTH_BUFFER_BIT);
@@ -181,26 +196,24 @@ public class Main extends ApplicationAdapter{
 
         int i = 0;
 
+        float delta = Gdx.graphics.getDeltaTime();
+
         
         //Searching for planet models in the instances
-        for(ModelInstance obj : instances){
+        for(ModelInstance obj : planetInstances){
 
             i++;
-
-            if(obj.getNode("planet") != null){
-                
-
-                float x = MathUtils.cosDeg(planetAngle) * (planetRadius + starRadius + initialPositions.get(i-1).x);
-                float z = MathUtils.sinDeg(planetAngle) * (planetRadius + starRadius + initialPositions.get(i-1).z);
-
-                obj.transform.setToTranslation(x, 0f, z);
-            }
+            
+            MovePlanets(delta, obj, i);
 
         }
         
 
         modelBatch.begin(camera);
-        modelBatch.render(instances, environment);
+
+        modelBatch.render(starInstance, environment);
+        modelBatch.render(planetInstances);
+
         modelBatch.end();
 
         //Camera Movement
@@ -228,6 +241,17 @@ public class Main extends ApplicationAdapter{
             camera.rotate(cameraRotation, 1f);
         }else if(Gdx.input.isKeyPressed(Keys.Q)){
             camera.rotate(cameraRotation, -1f);
+        }
+
+        //Create new planet
+        if(Gdx.input.justTouched()){
+
+            Ray ray = camera.getPickRay(Gdx.input.getX(), Gdx.input.getY());
+
+                
+            System.out.println(ray.direction.x);
+
+
         }
 
     }
