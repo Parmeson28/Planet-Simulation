@@ -51,18 +51,18 @@ public class Main extends ApplicationAdapter{
     public void MovePlanets(float delta, ModelInstance obj, int i){
 
         angle = planetAngles.get(i-1);
+        float r = (float)Math.sqrt(Math.pow(initialPositions.get(i-1).x, 2) + Math.pow(initialPositions.get(i-1).z, 2));
 
-        float distanceFromOrigin = (float)Math.sqrt(Math.pow(initialPositions.get(i-1).x, 2) + Math.pow(initialPositions.get(i-1).z, 2));
+        float G = 1f; // tweak as necessary for simulation scale
+        float omega = (float)Math.sqrt((G * sunMass) / (r * r * r)); // angular velocity in radians per second
 
-        angle += (sunMass * delta)/(distanceFromOrigin/100);
-
-        if (angle > 360f)
-            angle -= 360f;
+        angle += MathUtils.radiansToDegrees * omega * delta; // update angle by omega * delta time, convert to degrees
+        if(angle > 360f) angle -= 360f;
 
         planetAngles.set(i-1, angle);
 
-        float x = MathUtils.cosDeg(angle) * (planetRadius + starRadius + distanceFromOrigin);
-        float z = MathUtils.sinDeg(angle) * (planetRadius + starRadius + distanceFromOrigin);
+        float x = MathUtils.cosDeg(angle) * r;
+        float z = MathUtils.sinDeg(angle) * r;
 
         obj.transform.setToTranslation(x, 0f, z);
     }
@@ -78,7 +78,7 @@ public class Main extends ApplicationAdapter{
 
     //Orbit system variables
     private float angle = 0;
-    private float sunMass = 5f;
+    private float sunMass = 1000f;
     private float planetRadius = 1f;
     private float starRadius = 10f;
     private Vector3 initialPosition;
@@ -243,10 +243,10 @@ public class Main extends ApplicationAdapter{
 
         //Reduce and increase simulation speed
         if(Gdx.input.isKeyJustPressed(Keys.P)){
-            sunMass += 1;
+            sunMass += 100;
         }
         if(Gdx.input.isKeyJustPressed(Keys.O)){
-            sunMass -= 1;
+            sunMass -= 100;
         }
         if(Gdx.input.isKeyJustPressed(Keys.SPACE)){
             sunMass = 0;
@@ -261,6 +261,7 @@ public class Main extends ApplicationAdapter{
          font.draw(batch, "Press P to increase velocity", 450, 450);
          font.draw(batch, "Press O to decrease velocity", 444, 470);
          font.draw(batch, "Press SPACE to set velocity to 0", 423, 430);
+         font.draw(batch, "Star mass: " + sunMass, 520, 410);
          batch.end();
     }
     
