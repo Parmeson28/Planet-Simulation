@@ -60,23 +60,29 @@ public class Main extends ApplicationAdapter{
     //This function is responsible for each planet orbit
     public void MovePlanets(float delta, ModelInstance obj, int i){
 
-        currentPosition = positions.get(i);
-        planetToSun = new Vector3(0, 0, 0).sub(currentPosition);
-        distanceFromOrigin = planetToSun.len2();
-        planetToSun.nor();
-
-        Vector3 acceleration = planetToSun.scl(G * M / distanceFromOrigin);
-
-        Vector3 vel = velocities.get(i);
-        vel.add(acceleration.scl(delta));
-        planetToSun.add(new Vector3(vel).scl(delta));
-
-        positions.set(i, planetToSun);
-        velocities.set(i, vel);
-
-
-        obj.transform.setToTranslation(planetToSun);
+        Vector3 currentPos = positions.get(i);
+        Vector3 velocity = velocities.get(i);
+    
+        // Compute direction to the sun (which is at origin)
+        Vector3 toSun = new Vector3(0, 0, 0).sub(currentPos);
+        float distanceSquared = toSun.len2();  // r^2
+    
+        // Normalize and compute acceleration
+        toSun.nor();
+        Vector3 acceleration = new Vector3(toSun).scl(G * M / distanceSquared);
+    
+        // Update velocity and position
+        velocity.add(acceleration.scl(delta));
+        Vector3 newPos = new Vector3(currentPos).add(new Vector3(velocity).scl(delta));
+    
+        // Store updated values
+        velocities.set(i, velocity);
+        positions.set(i, newPos);
+    
+        // Update transformation
+        obj.transform.setToTranslation(newPos);
     }
+
 
     
 
@@ -193,6 +199,7 @@ public class Main extends ApplicationAdapter{
         float delta = Gdx.graphics.getDeltaTime();
 
         
+
         //Searching for planet models in the instances
         for(ModelInstance obj : planetInstances){
             MovePlanets(delta, obj, i);
