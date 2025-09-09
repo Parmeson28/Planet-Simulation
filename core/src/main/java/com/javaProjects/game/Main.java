@@ -26,11 +26,8 @@ import com.badlogic.gdx.utils.Array;
 
 public class Main extends ApplicationAdapter{
 
-    public void CreatePlanets(float posx, float posz){
-
-        float planetAngle = MathUtils.random(0f, 360f);
-
-        planetAngles.add(planetAngle);
+    //This function is responsible for creating each planet
+    public void CreatePlanets(float posx, float posz, float mass, float planetRadius){
 
         modelBuilder.begin();
 
@@ -40,31 +37,45 @@ public class Main extends ApplicationAdapter{
 
         planet = new ModelInstance(model);
 
-        initialPosition = new Vector3(posx, 0f, posz);
-        initialPositions.add(initialPosition);
 
+        initialPosition = new Vector3(posx, 0f, posz);
         planet.transform.setToTranslation(initialPosition);
         planetInstances.add(planet);
-        
+
+        float r = (float)Math.sqrt(posx*posx + posz*posz);
+        float v = (float)Math.sqrt(1f * sunMass / r);
+
+        Vector3 velocity = new Vector3(-posz, 0f, posx).nor().scl(v);
+        velocities.add(velocity);
+
+        positions.add(initialPosition);
+        masses.add(mass);
+
+        float planetAngle = MathUtils.random(0f, 360f);
+
+        planetAngles.add(planetAngle);
+
     }
 
+    //This function is responsible for each planet orbit
     public void MovePlanets(float delta, ModelInstance obj, int i){
 
-        angle = planetAngles.get(i-1);
-        float r = (float)Math.sqrt(Math.pow(initialPositions.get(i-1).x, 2) + Math.pow(initialPositions.get(i-1).z, 2));
+        currentPosition = positions.get(i);
+        planetToSun = new Vector3(0, 0, 0).sub(currentPosition);
+        distanceFromOrigin = planetToSun.len2();
+        planetToSun.nor();
 
-        float G = 1f; // tweak as necessary for simulation scale
-        float omega = (float)Math.sqrt((G * sunMass) / (r * r * r)); // angular velocity in radians per second
+        Vector3 acceleration = planetToSun.scl(G * M / distanceFromOrigin);
 
-        angle += MathUtils.radiansToDegrees * omega * delta; // update angle by omega * delta time, convert to degrees
-        if(angle > 360f) angle -= 360f;
+        Vector3 vel = velocities.get(i);
+        vel.add(acceleration.scl(delta));
+        planetToSun.add(new Vector3(vel).scl(delta));
 
-        planetAngles.set(i-1, angle);
+        positions.set(i, planetToSun);
+        velocities.set(i, vel);
 
-        float x = MathUtils.cosDeg(angle) * r;
-        float z = MathUtils.sinDeg(angle) * r;
 
-        obj.transform.setToTranslation(x, 0f, z);
+        obj.transform.setToTranslation(planetToSun);
     }
 
     
@@ -79,11 +90,21 @@ public class Main extends ApplicationAdapter{
     //Orbit system variables
     private float angle = 0;
     private float sunMass = 1000f;
-    private float planetRadius = 1f;
-    private float starRadius = 10f;
+    private float planetRadius;
+    private float starRadius = 15f;
     private Vector3 initialPosition;
     private Array<Float> planetAngles = new Array<>();
-    private Array<Vector3> initialPositions;
+
+    private Vector3 currentPosition = new Vector3();
+    private Vector3 planetToSun = new Vector3();
+    private float distanceFromOrigin;
+    private Array<Vector3> positions = new Array<>();
+    private Array<Vector3> velocities = new Array<>();
+    private Array<Float> masses = new Array<>(); 
+
+    //Macro universe variables
+    float G = 1f;
+    float M = sunMass;
 
     //Environment Variables
     private Environment environment;
@@ -103,8 +124,6 @@ public class Main extends ApplicationAdapter{
     @Override
     public void create() {
 
-        /******** === OVERALL VIEW OF THE CODE === ********/
-        /******** ===== (CREATING THE CAMERA) ===== ********/
 
         //Setting the camera as PerspectiveCamera for a 3d impression
         camera = new PerspectiveCamera(75, 
@@ -119,20 +138,11 @@ public class Main extends ApplicationAdapter{
         camera.near = 0.1f;
         camera.far = 300f;
 
-        /******** ===== (CREATING THE CAMERA) ===== ********/
-        /******** === OVERALL VIEW OF THE CODE === ********/
-
-
-        /******** ============ OVERALL VIEW OF THE CODE ============ ********/
-        /******** ===== (BUILDING THE PLANET AND STAR MODELS) ===== ********/
-
         //The modelBuilder is used to build the sphere model and passes the node id 
         //which later will be used to identify the type of body it is
-
         modelBuilder = new ModelBuilder();
         planetInstances = new Array<>();
         starInstance = new Array<>();
-        initialPositions = new Array<>();
 
         modelBuilder.begin();
         modelBuilder.node().id = "sun";
@@ -147,12 +157,6 @@ public class Main extends ApplicationAdapter{
         star.transform.setToTranslation(initialPosition);
         starInstance.add(star);
         
-        /******** ===== (BUILDING THE PLANET AND STAR MODELS) ===== ********/
-        /******** ============ OVERALL VIEW OF THE CODE ============ ********/
-
-
-        /******** ========== OVERALL VIEW OF THE CODE ========== ********/
-        /******** ===== (SETTING ENVIRONMENT AND LIGHTING) ===== ********/
 
         //Setting the directional light
         directionalLight = new DirectionalLight();
@@ -168,10 +172,6 @@ public class Main extends ApplicationAdapter{
         shapeRenderer = new ShapeRenderer();
         batch = new SpriteBatch();
         font = new BitmapFont();
-        
-        
-        /******** ===== (SETTING ENVIRONMENT AND LIGHTING) ===== ********/
-        /******** ========== OVERALL VIEW OF THE CODE ========== ********/
 
         modelBatch = new ModelBatch();
     }
@@ -195,8 +195,8 @@ public class Main extends ApplicationAdapter{
         
         //Searching for planet models in the instances
         for(ModelInstance obj : planetInstances){
-            i++;
             MovePlanets(delta, obj, i);
+            i++;
         }
     
         modelBatch.begin(camera);
@@ -237,8 +237,12 @@ public class Main extends ApplicationAdapter{
         if(Gdx.input.isKeyJustPressed(Keys.ENTER)){
             float randX = MathUtils.random(10, 40);
             float randZ = MathUtils.random(10, 40);
+            float randMass = MathUtils.random(.5f, 25f);
+            planetRadius = MathUtils.random(.1f, 5f);
 
-            CreatePlanets(randX, randZ);
+            CreatePlanets(randX, randZ, randMass, planetRadius);
+
+            System.out.println(planetInstances.size);
         }
 
         //Reduce and increase simulation speed
